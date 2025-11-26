@@ -1,5 +1,8 @@
 fastapi
 uvicorn
 python-jose
-bcrypt==4.0.1
 passlib
+bcrypt==4.0.1
+python-multipart
+argon2-cffi
+mangum
