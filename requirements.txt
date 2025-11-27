@@ -1,7 +1,6 @@
 fastapi
-uvicorn
 python-jose
-passlib
+passlib[bcrypt]
 bcrypt==4.0.1
 python-multipart
 argon2-cffi
