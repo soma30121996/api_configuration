@@ -1,3 +1,4 @@
+from mangum import Mangum
 from fastapi import FastAPI, Depends, HTTPException, Security, Form
 from fastapi.security import (
     APIKeyHeader,
@@ -175,6 +176,8 @@ def basic_route(username: str = Depends(get_current_user)):
         "message": f"Hello {username}, you accessed AI Hub data with Basic Auth",
         "data": PROJECT_INFO
     }
+
+handler = Mangum(app)
 
 # 6. Redirect Example
 # @app.get("/redirect", summary="Redirect to Webhook")
