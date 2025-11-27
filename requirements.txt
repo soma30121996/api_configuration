@@ -1,5 +1,6 @@
-fastapi
-uvicorn
-python-jose
-passlib[bcrypt]
-mangum
+fastapi==0.109.1
+uvicorn==0.23.2
+python-jose==3.3.0
+passlib[bcrypt]==1.7.4
+mangum==0.19.0
+cryptography==41.0.4
