@@ -1,17 +1,10 @@
-from mangum import Mangum
 from fastapi import FastAPI, Depends, HTTPException, Security, Form
-from fastapi.security import (
-    APIKeyHeader,
-    OAuth2PasswordBearer,
-    HTTPBearer,
-    HTTPBasic,
-    HTTPBasicCredentials
-)
+from fastapi.security import APIKeyHeader, OAuth2PasswordBearer, HTTPBearer, HTTPBasic, HTTPBasicCredentials
 from fastapi.security.api_key import APIKey
-from fastapi.responses import RedirectResponse
 from typing import Dict
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from mangum import Mangum
 
 # =====================
 # CONFIG
@@ -120,26 +113,14 @@ async def get_current_user(credentials: HTTPBasicCredentials = Depends(basic_sch
 # =====================
 # ROUTES
 # =====================
-
-# 1. No Auth
 @app.get("/public", summary="No Auth - Get AI Hub Info")
 def public_route() -> Dict:
-    return {
-        "auth": "none",
-        "message": "Publicly accessible AI Hub details",
-        "data": PROJECT_INFO
-    }
+    return {"auth": "none", "message": "Publicly accessible AI Hub details", "data": PROJECT_INFO}
 
-# 2. API Key
 @app.get("/apikey-protected", summary="API Key Auth - Get AI Hub Info")
 def api_key_route(api_key: APIKey = Depends(get_api_key)):
-    return {
-        "auth": "api_key",
-        "message": "You accessed AI Hub data with an API Key",
-        "data": PROJECT_INFO
-    }
+    return {"auth": "api_key", "message": "You accessed AI Hub data with an API Key", "data": PROJECT_INFO}
 
-# 3. OAuth2
 @app.post("/token", summary="Get OAuth2 Token")
 def login_oauth2(username: str = Form(...), password: str = Form(...)):
     user = fake_users_db.get(username)
@@ -150,42 +131,15 @@ def login_oauth2(username: str = Form(...), password: str = Form(...)):
 
 @app.get("/oauth2-protected", summary="OAuth2 Auth - Get AI Hub Info")
 def oauth2_route(token_data: dict = Depends(get_oauth2_token)):
-    return {
-        "auth": "oauth2",
-        "user": token_data.get("sub"),
-        "message": "You accessed AI Hub data with OAuth2",
-        "data": PROJECT_INFO
-    }
+    return {"auth": "oauth2", "user": token_data.get("sub"), "message": "You accessed AI Hub data with OAuth2", "data": PROJECT_INFO}
 
-# 4. Bearer
 @app.get("/bearer-protected", summary="Bearer Auth - Get AI Hub Info")
 def bearer_route(token_data: dict = Depends(get_bearer_token)):
-    return {
-        "auth": "bearer",
-        "user": token_data.get("sub"),
-        "message": "You accessed AI Hub data with Bearer token",
-        "data": PROJECT_INFO
-    }
+    return {"auth": "bearer", "user": token_data.get("sub"), "message": "You accessed AI Hub data with Bearer token", "data": PROJECT_INFO}
 
-# 5. Basic Auth
 @app.get("/basic-protected", summary="Basic Auth - Get AI Hub Info")
 def basic_route(username: str = Depends(get_current_user)):
-    return {
-        "auth": "basic",
-        "user": username,
-        "message": f"Hello {username}, you accessed AI Hub data with Basic Auth",
-        "data": PROJECT_INFO
-    }
+    return {"auth": "basic", "user": username, "message": f"Hello {username}, you accessed AI Hub data with Basic Auth", "data": PROJECT_INFO}
 
+# Vercel serverless handler
 handler = Mangum(app)
-
-# 6. Redirect Example
-# @app.get("/redirect", summary="Redirect to Webhook")
-# def redirect_to_webhook():
-#     return RedirectResponse(url="https://webhook.site/6effb542-5424-4049-a39f-6d879cbca244")
-
-# Run with:
-# uvicorn main:app --reload --port 8080
-# python -m uvicorn app:app --reload --port 8080
-# http://127.0.0.1:8080/docs
-# http://127.0.0.1:8080/openapi.json
