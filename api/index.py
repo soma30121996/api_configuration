@@ -1,10 +1,5 @@
-from fastapi import FastAPI
+from app import app
 from mangum import Mangum
 
-app = FastAPI()
-
-@app.get("/")
-def home():
-    return {"message": "FastAPI deployed successfully on Vercel 🎉"}
-
+# Attach handler so Vercel can execute FastAPI
 handler = Mangum(app)
