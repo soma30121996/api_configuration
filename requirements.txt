@@ -1,6 +1,4 @@
 fastapi
+uvicorn
 python-jose
 passlib[bcrypt]
-python-multipart
-argon2-cffi
-mangum
