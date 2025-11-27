@@ -17,7 +17,7 @@ ALGORITHM = "HS256"
 fake_users_db = {
     "admin": {
         "username": "admin",
-        "hashed_password": "$2b$12$lq9VWtR23d3/xRdG9cMyRu8G2m058eTE155siSp74uCWqS.Mej09W"  # bcrypt("password")
+        "hashed_password": "$2b$12$lq9VWtR23d3/xRdG9cMyRu8G2m058eTE155siSp74uCWqS.Mej09W"
     }
 }
 
@@ -113,19 +113,15 @@ async def get_current_user(credentials: HTTPBasicCredentials = Depends(basic_sch
 # =====================
 # ROUTES
 # =====================
-
-# 1. No Auth
-@app.get("/public", summary="No Auth - Get AI Hub Info")
-def public_route() -> Dict:
+@app.get("/public")
+def public_route():
     return {"auth": "none", "message": "Publicly accessible AI Hub details", "data": PROJECT_INFO}
 
-# 2. API Key
-@app.get("/apikey-protected", summary="API Key Auth - Get AI Hub Info")
+@app.get("/apikey-protected")
 def api_key_route(api_key: APIKey = Depends(get_api_key)):
     return {"auth": "api_key", "message": "You accessed AI Hub data with an API Key", "data": PROJECT_INFO}
 
-# 3. OAuth2
-@app.post("/token", summary="Get OAuth2 Token")
+@app.post("/token")
 def login_oauth2(username: str = Form(...), password: str = Form(...)):
     user = fake_users_db.get(username)
     if user and verify_password(password, user["hashed_password"]):
@@ -133,22 +129,20 @@ def login_oauth2(username: str = Form(...), password: str = Form(...)):
         return {"access_token": token, "token_type": "bearer"}
     raise HTTPException(status_code=401, detail="Invalid username or password")
 
-@app.get("/oauth2-protected", summary="OAuth2 Auth - Get AI Hub Info")
+@app.get("/oauth2-protected")
 def oauth2_route(token_data: dict = Depends(get_oauth2_token)):
     return {"auth": "oauth2", "user": token_data.get("sub"), "message": "You accessed AI Hub data with OAuth2", "data": PROJECT_INFO}
 
-# 4. Bearer
-@app.get("/bearer-protected", summary="Bearer Auth - Get AI Hub Info")
+@app.get("/bearer-protected")
 def bearer_route(token_data: dict = Depends(get_bearer_token)):
     return {"auth": "bearer", "user": token_data.get("sub"), "message": "You accessed AI Hub data with Bearer token", "data": PROJECT_INFO}
 
-# 5. Basic Auth
-@app.get("/basic-protected", summary="Basic Auth - Get AI Hub Info")
+@app.get("/basic-protected")
 def basic_route(username: str = Depends(get_current_user)):
     return {"auth": "basic", "user": username, "message": f"Hello {username}, you accessed AI Hub data with Basic Auth", "data": PROJECT_INFO}
 
-# 6. Optional Redirect Example
-# @app.get("/redirect", summary="Redirect to Webhook")
+# Optional redirect
+# @app.get("/redirect")
 # def redirect_to_webhook():
 #     return RedirectResponse(url="https://webhook.site/your-webhook-url")
 
