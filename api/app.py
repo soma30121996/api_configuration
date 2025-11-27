@@ -11,8 +11,6 @@ from fastapi.responses import RedirectResponse
 from typing import Dict
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi.middleware.cors import CORSMiddleware
-from mangum import Mangum
 
 # =====================
 # CONFIG
@@ -29,7 +27,6 @@ fake_users_db = {
     }
 }
 
-# Use bcrypt for now; for serverless Argon2 is also fine
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # =====================
@@ -39,16 +36,6 @@ app = FastAPI(
     title="AI Hub Auth API",
     description="Test API for AI Hub project with different authentication methods",
     version="1.0.0"
-)
-
-# =====================
-# CORS (optional)
-# =====================
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
 )
 
 # =====================
@@ -133,8 +120,6 @@ async def get_current_user(credentials: HTTPBasicCredentials = Depends(basic_sch
 # ROUTES
 # =====================
 
-@app.get("/") def root(): return {"message": "AI Hub FastAPI running on Vercel 🚀"}
-
 # 1. No Auth
 @app.get("/public", summary="No Auth - Get AI Hub Info")
 def public_route() -> Dict:
@@ -196,7 +181,8 @@ def basic_route(username: str = Depends(get_current_user)):
 # def redirect_to_webhook():
 #     return RedirectResponse(url="https://webhook.site/6effb542-5424-4049-a39f-6d879cbca244")
 
-# =====================
-# Mangum handler for Vercel
-# =====================
-handler = Mangum(app)
+# Run with:
+# uvicorn main:app --reload --port 8080
+# python -m uvicorn app:app --reload --port 8080
+# http://127.0.0.1:8080/docs
+# http://127.0.0.1:8080/openapi.json
