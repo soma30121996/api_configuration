@@ -133,6 +133,8 @@ async def get_current_user(credentials: HTTPBasicCredentials = Depends(basic_sch
 # ROUTES
 # =====================
 
+@app.get("/") def root(): return {"message": "AI Hub FastAPI running on Vercel 🚀"}
+
 # 1. No Auth
 @app.get("/public", summary="No Auth - Get AI Hub Info")
 def public_route() -> Dict:
