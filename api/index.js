@@ -16,6 +16,9 @@ app.use(cors());
 const API_KEY = "test-api-key";
 const SECRET_KEY = "mysecretkey";
 
+// Hardcoded Bearer token that always works
+const STATIC_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc2NDMxNzI3NiwiZXhwIjoxNzY0MzIwODc2fQ.8loE1C11xYsA7iXRmJE2CnrL08-NTYNJcCVo5D4m-kw";
+
 // Fake users
 const users = {
   admin: {
@@ -68,6 +71,30 @@ function verifyToken(token) {
 }
 
 // =====================
+// MIDDLEWARES
+// =====================
+function bearerAuth(req, res, next) {
+  const authHeader = req.headers["authorization"];
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(403).json({ detail: "Bearer token missing" });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  // Allow static token always
+  if (token === STATIC_TOKEN) {
+    req.user = { username: "admin" };
+    return next();
+  }
+
+  const payload = verifyToken(token);
+  if (!payload) return res.status(403).json({ detail: "Invalid Bearer token" });
+
+  req.user = { username: payload.sub };
+  next();
+}
+
+// =====================
 // ROUTES
 // =====================
 
@@ -102,7 +129,7 @@ app.get("/basic-protected", (req, res) => {
   });
 });
 
-// OAuth2 token route (simulate login)
+// OAuth2 token route (login simulation)
 app.post("/token", (req, res) => {
   const { username, password } = req.body;
   const user = users[username];
@@ -114,25 +141,13 @@ app.post("/token", (req, res) => {
 });
 
 // OAuth2 protected
-app.get("/oauth2-protected", (req, res) => {
-  const authHeader = req.headers["authorization"];
-  if (!authHeader || !authHeader.startsWith("Bearer ")) return res.status(403).json({ detail: "Invalid OAuth2 token" });
-  const token = authHeader.split(" ")[1];
-  const payload = verifyToken(token);
-  if (!payload) return res.status(403).json({ detail: "Invalid OAuth2 token" });
-
-  res.json({ auth: "oauth2", user: payload.sub, message: "You accessed AI Hub data with OAuth2", data: PROJECT_INFO });
+app.get("/oauth2-protected", bearerAuth, (req, res) => {
+  res.json({ auth: "oauth2", user: req.user.username, message: "You accessed AI Hub data with OAuth2", data: PROJECT_INFO });
 });
 
-// Bearer token protected (same as OAuth2)
-app.get("/bearer-protected", (req, res) => {
-  const authHeader = req.headers["authorization"];
-  if (!authHeader || !authHeader.startsWith("Bearer ")) return res.status(403).json({ detail: "Invalid Bearer token" });
-  const token = authHeader.split(" ")[1];
-  const payload = verifyToken(token);
-  if (!payload) return res.status(403).json({ detail: "Invalid Bearer token" });
-
-  res.json({ auth: "bearer", user: payload.sub, message: "You accessed AI Hub data with Bearer token", data: PROJECT_INFO });
+// Bearer token protected
+app.get("/bearer-protected", bearerAuth, (req, res) => {
+  res.json({ auth: "bearer", user: req.user.username, message: "You accessed AI Hub data with Bearer token", data: PROJECT_INFO });
 });
 
-module.exports = app; // Vercel expects this
+module.exports = app;
