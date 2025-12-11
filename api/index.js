@@ -1,22 +1,12 @@
-const swaggerUi = require("swagger-ui-express");
-const fs = require("fs");
-const path = require("path");
-
-// Load swagger.json from root folder
-const swaggerPath = path.join(__dirname, "..", "swagger.json");
-const swaggerDocument = JSON.parse(fs.readFileSync(swaggerPath, "utf8"));
-
-// Swagger UI endpoint
-app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument)
-
-
-
 const express = require("express");
 const bodyParser = require("body-parser");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const basicAuth = require("basic-auth");
 const cors = require("cors");
+const swaggerUi = require("swagger-ui-express");
+const fs = require("fs");
+const path = require("path");
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -24,13 +14,22 @@ app.use(bodyParser.json());
 app.use(cors());
 
 // =====================
+// SWAGGER SETUP (MUST BE AFTER app = express())
+// =====================
+const swaggerPath = path.join(__dirname, "..", "swagger.json");
+const swaggerDocument = JSON.parse(fs.readFileSync(swaggerPath, "utf8"));
+
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+// ---------------------
+
+// =====================
 // CONFIG
 // =====================
 const API_KEY = "test-api-key";
 const SECRET_KEY = "mysecretkey";
 
-// Hardcoded Bearer token that always works
-const STATIC_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc2NDMxNzI3NiwiZXhwIjoxNzY0MzIwODc2fQ.8loE1C11xYsA7iXRmJE2CnrL08-NTYNJcCVo5D4m-kw";
+const STATIC_TOKEN =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc2NDMxNzI3NiwiZXhwIjoxNzY0MzIwODc2fQ.8loE1C11xYsA7iXRmJE2CnrL08-NTYNJcCVo5D4m-kw";
 
 // Fake users
 const users = {
@@ -54,10 +53,14 @@ const PROJECT_INFO = {
     { name: "Gnanasekaran Perumal", role: "Back-end Developer" }
   ],
   testing_team: [
-    { name: "Somashekar N", role: "Manual & Automation Test Engineer, Prompt Engineer" },
+    {
+      name: "Somashekar N",
+      role: "Manual & Automation Test Engineer, Prompt Engineer"
+    },
     { name: "Swathi", role: "Manual & Automation Test Engineer, Prompt Engineer" }
   ],
-  description: "AI Hub on Neutrinos is a framework for integrating AI/ML into apps with NLP, GenAI, analytics, and automation.",
+  description:
+    "AI Hub on Neutrinos is a framework for integrating AI/ML into apps with NLP, GenAI, analytics, and automation.",
   features: [
     "Ready-to-use AI Models",
     "Custom Model Integration",
@@ -65,7 +68,16 @@ const PROJECT_INFO = {
     "Workflow Automation",
     "Scalability for Enterprises"
   ],
-  modules: ["Dashboard", "Prediction", "Extraction", "Tokens", "Assistant", "Knowledge", "Audit Logs", "Deployment"]
+  modules: [
+    "Dashboard",
+    "Prediction",
+    "Extraction",
+    "Tokens",
+    "Assistant",
+    "Knowledge",
+    "Audit Logs",
+    "Deployment"
+  ]
 };
 
 // =====================
@@ -94,7 +106,6 @@ function bearerAuth(req, res, next) {
 
   const token = authHeader.split(" ")[1];
 
-  // Allow static token always
   if (token === STATIC_TOKEN) {
     req.user = { username: "admin" };
     return next();
@@ -113,14 +124,22 @@ function bearerAuth(req, res, next) {
 
 // Public
 app.get("/public", (req, res) => {
-  res.json({ auth: "none", message: "Publicly accessible AI Hub details", data: PROJECT_INFO });
+  res.json({
+    auth: "none",
+    message: "Publicly accessible AI Hub details",
+    data: PROJECT_INFO
+  });
 });
 
 // API Key Protected
 app.get("/apikey-protected", (req, res) => {
   const apiKey = req.headers["x-api-key"];
   if (apiKey === API_KEY) {
-    return res.json({ auth: "api_key", message: "You accessed AI Hub data with an API Key", data: PROJECT_INFO });
+    return res.json({
+      auth: "api_key",
+      message: "You accessed AI Hub data with an API Key",
+      data: PROJECT_INFO
+    });
   }
   res.status(403).json({ detail: "Invalid API Key" });
 });
@@ -131,7 +150,10 @@ app.get("/basic-protected", (req, res) => {
   if (!credentials || !users[credentials.name]) {
     return res.status(401).json({ detail: "Invalid Basic Auth credentials" });
   }
-  const valid = bcrypt.compareSync(credentials.pass, users[credentials.name].passwordHash);
+  const valid = bcrypt.compareSync(
+    credentials.pass,
+    users[credentials.name].passwordHash
+  );
   if (!valid) return res.status(401).json({ detail: "Invalid Basic Auth credentials" });
 
   res.json({
@@ -155,12 +177,22 @@ app.post("/token", (req, res) => {
 
 // OAuth2 protected
 app.get("/oauth2-protected", bearerAuth, (req, res) => {
-  res.json({ auth: "oauth2", user: req.user.username, message: "You accessed AI Hub data with OAuth2", data: PROJECT_INFO });
+  res.json({
+    auth: "oauth2",
+    user: req.user.username,
+    message: "You accessed AI Hub data with OAuth2",
+    data: PROJECT_INFO
+  });
 });
 
 // Bearer token protected
 app.get("/bearer-protected", bearerAuth, (req, res) => {
-  res.json({ auth: "bearer", user: req.user.username, message: "You accessed AI Hub data with Bearer token", data: PROJECT_INFO });
+  res.json({
+    auth: "bearer",
+    user: req.user.username,
+    message: "You accessed AI Hub data with Bearer token",
+    data: PROJECT_INFO
+  });
 });
 
 module.exports = app;
