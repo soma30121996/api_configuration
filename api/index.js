@@ -2,9 +2,12 @@ const swaggerUi = require("swagger-ui-express");
 const fs = require("fs");
 const path = require("path");
 
-// Load swagger.json (one folder above)
-const swaggerFile = path.join(__dirname, "..", "swagger.json");
-const swaggerDocument = JSON.parse(fs.readFileSync(swaggerFile, "utf8"));
+// Load swagger.json from root folder
+const swaggerPath = path.join(__dirname, "..", "swagger.json");
+const swaggerDocument = JSON.parse(fs.readFileSync(swaggerPath, "utf8"));
+
+// Swagger UI endpoint
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument)
 
 
 
