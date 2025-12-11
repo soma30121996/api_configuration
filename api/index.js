@@ -15,22 +15,25 @@ app.use(bodyParser.json());
 app.use(cors());
 
 // =====================
-// SWAGGER SETUP
+// SWAGGER SETUP (lazy load)
 // =====================
-try {
-  const swaggerPath = path.join(__dirname, "..", "swagger.json");
-  const swaggerDocument = JSON.parse(fs.readFileSync(swaggerPath, "utf8"));
-  app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-} catch (err) {
-  console.error("❌ Swagger file loading error:", err.message);
-}
+app.use("/docs", swaggerUi.serve, (req, res, next) => {
+  try {
+    const swaggerPath = path.join(__dirname, "../swagger.json");
+    const swaggerData = fs.readFileSync(swaggerPath, "utf8");
+    const swaggerDocument = JSON.parse(swaggerData);
+    return swaggerUi.setup(swaggerDocument)(req, res, next);
+  } catch (err) {
+    console.error("Swagger load error:", err.message);
+    return res.status(500).json({ error: "Failed to load swagger.json" });
+  }
+});
 
 // =====================
 // CONFIG
 // =====================
 const API_KEY = "test-api-key";
 const SECRET_KEY = "mysecretkey";
-
 const STATIC_TOKEN =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc2NDMxNzI3NiwiZXhwIjoxNzY0MzIwODc2fQ.8loE1C11xYsA7iXRmJE2CnrL08-NTYNJcCVo5D4m-kw";
 
