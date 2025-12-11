@@ -1,4 +1,17 @@
 const express = require("express");
+const swaggerUi = require("swagger-ui-express");
+const fs = require("fs");
+const path = require("path");
+
+const app = express();
+
+// Load swagger.json
+const swaggerPath = path.join(__dirname, "..", "swagger.json");
+const swaggerDocument = JSON.parse(fs.readFileSync(swaggerPath, "utf8"));
+
+
+
+const express = require("express");
 const bodyParser = require("body-parser");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
