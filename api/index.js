@@ -7,6 +7,7 @@ const cors = require("cors");
 const swaggerUi = require("swagger-ui-express");
 const fs = require("fs");
 const path = require("path");
+const serverless = require("serverless-http");
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -14,13 +15,15 @@ app.use(bodyParser.json());
 app.use(cors());
 
 // =====================
-// SWAGGER SETUP (MUST BE AFTER app = express())
+// SWAGGER SETUP
 // =====================
-const swaggerPath = path.join(__dirname, "..", "swagger.json");
-const swaggerDocument = JSON.parse(fs.readFileSync(swaggerPath, "utf8"));
-
-app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-// ---------------------
+try {
+  const swaggerPath = path.join(__dirname, "..", "swagger.json");
+  const swaggerDocument = JSON.parse(fs.readFileSync(swaggerPath, "utf8"));
+  app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+} catch (err) {
+  console.error("❌ Swagger file loading error:", err.message);
+}
 
 // =====================
 // CONFIG
@@ -31,7 +34,6 @@ const SECRET_KEY = "mysecretkey";
 const STATIC_TOKEN =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc2NDMxNzI3NiwiZXhwIjoxNzY0MzIwODc2fQ.8loE1C11xYsA7iXRmJE2CnrL08-NTYNJcCVo5D4m-kw";
 
-// Fake users
 const users = {
   admin: {
     username: "admin",
@@ -39,7 +41,6 @@ const users = {
   }
 };
 
-// Project info
 const PROJECT_INFO = {
   project_name: "AI Hub",
   manager: "Gowtham",
@@ -96,7 +97,7 @@ function verifyToken(token) {
 }
 
 // =====================
-// MIDDLEWARES
+// MIDDLEWARE: Bearer Auth
 // =====================
 function bearerAuth(req, res, next) {
   const authHeader = req.headers["authorization"];
@@ -150,10 +151,12 @@ app.get("/basic-protected", (req, res) => {
   if (!credentials || !users[credentials.name]) {
     return res.status(401).json({ detail: "Invalid Basic Auth credentials" });
   }
+
   const valid = bcrypt.compareSync(
     credentials.pass,
     users[credentials.name].passwordHash
   );
+
   if (!valid) return res.status(401).json({ detail: "Invalid Basic Auth credentials" });
 
   res.json({
@@ -164,18 +167,20 @@ app.get("/basic-protected", (req, res) => {
   });
 });
 
-// OAuth2 token route (login simulation)
+// OAuth2: Login → token
 app.post("/token", (req, res) => {
   const { username, password } = req.body;
   const user = users[username];
+
   if (user && bcrypt.compareSync(password, user.passwordHash)) {
     const token = createToken({ sub: username });
     return res.json({ access_token: token, token_type: "bearer" });
   }
+
   res.status(401).json({ detail: "Invalid username or password" });
 });
 
-// OAuth2 protected
+// OAuth2 Protected
 app.get("/oauth2-protected", bearerAuth, (req, res) => {
   res.json({
     auth: "oauth2",
@@ -185,7 +190,7 @@ app.get("/oauth2-protected", bearerAuth, (req, res) => {
   });
 });
 
-// Bearer token protected
+// Bearer Protected
 app.get("/bearer-protected", bearerAuth, (req, res) => {
   res.json({
     auth: "bearer",
@@ -195,4 +200,7 @@ app.get("/bearer-protected", bearerAuth, (req, res) => {
   });
 });
 
-module.exports = app;
+// =====================
+// EXPORT FOR VERCEL
+// =====================
+module.exports = serverless(app);
